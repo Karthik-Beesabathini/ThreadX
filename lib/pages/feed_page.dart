@@ -1,4 +1,3 @@
-import 'package:calc_app/pages/profile_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -26,8 +25,6 @@ class _FeedPageState extends State<FeedPage> {
     'mech'
   ];
 
-  final PageController _pageController = PageController(initialPage: 0);
-
   Future<void> signUserOut() async {
     try {
       await GoogleSignIn().signOut();
@@ -43,14 +40,6 @@ class _FeedPageState extends State<FeedPage> {
 
   void _goToGeneral() {
     setState(() => _selectedCategory = 'General');
-    int idx = _categories.indexOf('General');
-    if (_pageController.hasClients) {
-      _pageController.animateToPage(
-        idx,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-      );
-    }
   }
 
   void _openCommunityPicker(BuildContext context) {
@@ -126,7 +115,6 @@ class _FeedPageState extends State<FeedPage> {
                       itemBuilder: (context, idx) {
                         String cat = filtered[idx];
                         bool isSelected = _selectedCategory == cat;
-                        int realIndex = _categories.indexOf(cat);
 
                         return Material(
                           color: isSelected ? Colors.black : Colors.grey[50],
@@ -137,11 +125,6 @@ class _FeedPageState extends State<FeedPage> {
                               setState(() {
                                 _selectedCategory = cat;
                               });
-                              _pageController.animateToPage(
-                                realIndex,
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeInOut,
-                              );
                               Navigator.pop(context);
                             },
                             child: Padding(
@@ -180,7 +163,6 @@ class _FeedPageState extends State<FeedPage> {
     );
   }
 
-  // Helper builder widget to keep the custom card styling consistent across all streams
   Widget _buildPostCard(String postId, Map<String, dynamic> postData) {
     return Card(
       color: Colors.white,
@@ -235,12 +217,6 @@ class _FeedPageState extends State<FeedPage> {
   }
 
   @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[200],
@@ -248,23 +224,6 @@ class _FeedPageState extends State<FeedPage> {
         backgroundColor: Colors.grey[200],
         centerTitle: true,
         title: const Text("THREAD"),
-        leading: IconButton(
-          icon: const Icon(Icons.person),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const ProfilePage(),
-              ),
-            );
-          },
-        ),
-        actions: [
-          IconButton(
-            onPressed: signUserOut,
-            icon: const Icon(Icons.logout),
-          ),
-        ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(56),
           child: Padding(
@@ -329,25 +288,12 @@ class _FeedPageState extends State<FeedPage> {
           ),
         ),
       ),
-      body: PageView.builder(
-        controller: _pageController,
-        itemCount: _categories.length,
-        onPageChanged: (int index) {
-          setState(() {
-            _selectedCategory = _categories[index];
-          });
-        },
-        itemBuilder: (context, pageIndex) {
-          String currentPageCategory = _categories[pageIndex];
-          return _buildFeedContent(currentPageCategory);
-        },
-      ),
+      // ✅ Removed PageView.builder entirely to eliminate horizontal swiping gestures
+      body: _buildFeedContent(_selectedCategory),
     );
   }
 
   Widget _buildFeedContent(String currentPageCategory) {
-    // General shows the most recent posts across all communities, capped at 40.
-    // Other categories show that community's own posts, same cap.
     Query query = FirebaseFirestore.instance
         .collection('posts')
         .orderBy('timestamp', descending: true)

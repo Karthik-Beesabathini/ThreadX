@@ -48,6 +48,7 @@ dependencies:
   google_sign_in: ^6.2.1
   cloud_firestore: ^6.6.0
   url_launcher: ^6.3.2
+  intl: ^0.20.3
 
 dev_dependencies:
   flutter_test:
@@ -60,6 +61,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.8
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -105,3 +107,15 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+# ... your fonts or other flutter settings above ...
+
+# Make sure this is all the way to the left margin (no spaces before it)
+flutter_native_splash:
+  color: "#111111" # A clean, modern dark background to match your aesthetic
+  image: assets/images/appphoto.png # Path to your logo asset
+
+  # Optional adjustments for different platforms
+  android_12:
+    color: "#111111"
+    image: assets/images/appphoto.png
+

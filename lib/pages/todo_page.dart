@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class TodoPage extends StatefulWidget {
   const TodoPage({super.key});
@@ -13,29 +14,36 @@ class TodoPageState extends State<TodoPage> {
   final currentUser = FirebaseAuth.instance.currentUser;
   final _todoController = TextEditingController();
 
-  String _selectedCategory = 'General';
-  final List<String> _categories = ['General', 'Act/Ass', 'Quizzes'];
-  final PageController _pageController = PageController(initialPage: 0);
+  DateTime? _selectedDueDateTime;
+  String _selectedPriority = 'none';
 
-  DateTime? _selectedDueDate;
+  final List<String> _priorities = ['high', 'medium', 'low', 'none'];
 
   void _addTaskFromDialog() async {
     String taskText = _todoController.text.trim();
     if (taskText.isEmpty || currentUser == null) return;
+
+    int priorityIndex = 3;
+    if (_selectedPriority == 'high') priorityIndex = 0;
+    if (_selectedPriority == 'medium') priorityIndex = 1;
+    if (_selectedPriority == 'low') priorityIndex = 2;
+
     await FirebaseFirestore.instance
         .collection('users')
         .doc(currentUser!.uid)
         .collection('todos')
         .add({
       'title': taskText,
-      'category': _selectedCategory,
       'isCompleted': false,
+      'priority': _selectedPriority,
+      'priorityIndex': priorityIndex,
       'startDate': FieldValue.serverTimestamp(),
-      'dueDate': _selectedDueDate != null ? Timestamp.fromDate(_selectedDueDate!) : null,
+      'dueDate': _selectedDueDateTime != null ? Timestamp.fromDate(_selectedDueDateTime!) : null,
     });
 
     _todoController.clear();
-    _selectedDueDate = null;
+    _selectedDueDateTime = null;
+    _selectedPriority = 'none';
   }
 
   void _toggleTask(String docId, bool currentStatus) async {
@@ -58,95 +66,155 @@ class TodoPageState extends State<TodoPage> {
         .delete();
   }
 
-  // Public so HomePage's single shared FAB can trigger this via GlobalKey —
-  // TodoPage no longer owns its own FloatingActionButton.
   void showAddTaskDialog() {
     _todoController.clear();
-    _selectedDueDate = null;
+    _selectedDueDateTime = null;
+    _selectedPriority = 'none';
 
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
           return AlertDialog(
+            backgroundColor: Colors.grey[900],
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: Text(
-              "Add Task to $_selectedCategory",
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            title: const Text(
+              "Add New Task",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.white),
             ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // 1. Task Title Input field
-                TextField(
-                  controller: _todoController,
-                  autofocus: true,
-                  textCapitalization: TextCapitalization.sentences,
-                  decoration: InputDecoration(
-                    hintText: "What needs to be done?",
-                    filled: true,
-                    fillColor: Colors.grey[100],
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // 2. Optional Calendar Date picker anchor row
-                const Text("Due Date (Optional)", style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.grey)),
-                const SizedBox(height: 6),
-                InkWell(
-                  onTap: () async {
-                    final DateTime? picked = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime.now(),
-                      lastDate: DateTime.now().add(const Duration(days: 365)),
-                    );
-                    if (picked != null) {
-                      setDialogState(() {
-                        _selectedDueDate = picked;
-                      });
-                    }
-                  },
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text("Priority", style: TextStyle(fontSize: 13, color: Colors.grey)),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
                     decoration: BoxDecoration(
-                      color: Colors.grey[100],
+                      color: Colors.grey[800],
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          _selectedDueDate == null
-                              ? "No due date set"
-                              : "${_selectedDueDate!.day}/${_selectedDueDate!.month}/${_selectedDueDate!.year}",
-                          style: TextStyle(
-                            color: _selectedDueDate == null ? Colors.grey[600] : Colors.black,
-                            fontWeight: _selectedDueDate == null ? FontWeight.normal : FontWeight.bold,
-                          ),
-                        ),
-                        const Icon(Icons.calendar_month_rounded, color: Colors.grey),
-                      ],
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _selectedPriority,
+                        dropdownColor: Colors.grey[800],
+                        style: const TextStyle(color: Colors.white),
+                        icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+                        isExpanded: true,
+                        items: _priorities.map((String val) {
+                          return DropdownMenuItem<String>(
+                            value: val,
+                            child: Text(val.toUpperCase()),
+                          );
+                        }).toList(),
+                        onChanged: (newValue) {
+                          if (newValue != null) {
+                            setDialogState(() {
+                              _selectedPriority = newValue;
+                            });
+                          }
+                        },
+                      ),
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 16),
+
+                  const Text("Task", style: TextStyle(fontSize: 13, color: Colors.grey)),
+                  const SizedBox(height: 6),
+                  TextField(
+                    controller: _todoController,
+                    autofocus: true,
+                    style: const TextStyle(color: Colors.white),
+                    textCapitalization: TextCapitalization.sentences,
+                    decoration: InputDecoration(
+                      hintText: "What needs to be done?",
+                      hintStyle: const TextStyle(color: Colors.grey),
+                      filled: true,
+                      fillColor: Colors.grey[800],
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  const Text("Due Date & Time", style: TextStyle(fontSize: 13, color: Colors.grey)),
+                  const SizedBox(height: 6),
+                  InkWell(
+                    onTap: () async {
+                      DateTime now = DateTime.now();
+
+                      final DateTime? pickedDate = await showDatePicker(
+                        context: context,
+                        initialDate: now,
+                        firstDate: now,
+                        lastDate: now.add(const Duration(days: 365)),
+                      );
+
+                      if (pickedDate != null) {
+                        if (!context.mounted) return;
+                        final TimeOfDay? pickedTime = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.now(),
+                        );
+
+                        if (pickedTime != null) {
+                          DateTime combinedDateTime = DateTime(
+                            pickedDate.year,
+                            pickedDate.month,
+                            pickedDate.day,
+                            pickedTime.hour,
+                            pickedTime.minute,
+                          );
+
+                          if (combinedDateTime.isBefore(DateTime.now())) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text("Selected time has already passed!")),
+                            );
+                            return;
+                          }
+
+                          setDialogState(() {
+                            _selectedDueDateTime = combinedDateTime;
+                          });
+                        }
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[800],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            _selectedDueDateTime == null
+                                ? "No due date set"
+                                : DateFormat('dd/MM/yyyy hh:mm a').format(_selectedDueDateTime!),
+                            style: TextStyle(
+                              color: _selectedDueDateTime == null ? Colors.grey : Colors.white,
+                              fontWeight: _selectedDueDateTime == null ? FontWeight.normal : FontWeight.bold,
+                            ),
+                          ),
+                          const Icon(Icons.calendar_month_rounded, color: Colors.white),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
             actions: [
               TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  _todoController.clear();
-                  _selectedDueDate = null;
-                },
+                onPressed: () => Navigator.pop(context),
                 child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.black,
-                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.white,
+                  foregroundColor: Colors.black,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
                 onPressed: () {
@@ -164,12 +232,12 @@ class TodoPageState extends State<TodoPage> {
     );
   }
 
-  Stream<QuerySnapshot> _getFilteredTodosStream(String category) {
+  Stream<QuerySnapshot> _getGlobalTodosStream() {
     return FirebaseFirestore.instance
         .collection('users')
         .doc(currentUser!.uid)
         .collection('todos')
-        .where('category', isEqualTo: category)
+        .orderBy('priorityIndex', descending: false)
         .orderBy('startDate', descending: true)
         .snapshots();
   }
@@ -177,7 +245,6 @@ class TodoPageState extends State<TodoPage> {
   @override
   void dispose() {
     _todoController.dispose();
-    _pageController.dispose();
     super.dispose();
   }
 
@@ -194,106 +261,111 @@ class TodoPageState extends State<TodoPage> {
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(50),
-          child: Container(
-            height: 50,
-            color: Colors.white,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: _categories.length,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              itemBuilder: (context, index) {
-                String cat = _categories[index];
-                bool isSelected = _selectedCategory == cat;
-
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: ChoiceChip(
-                    label: Text(cat),
-                    selected: isSelected,
-                    selectedColor: Colors.black,
-                    backgroundColor: Colors.grey[100],
-                    labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black87, fontWeight: FontWeight.bold),
-                    onSelected: (bool selected) {
-                      if (selected) {
-                        setState(() { _selectedCategory = cat; });
-                        _pageController.animateToPage(index, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
-                      }
-                    },
-                  ),
-                );
-              },
-            ),
-          ),
-        ),
       ),
+      body: StreamBuilder<QuerySnapshot>(
+        stream: _getGlobalTodosStream(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) return Center(child: Text("Error: ${snapshot.error}"));
+          if (!snapshot.hasData) return const Center(child: CircularProgressIndicator(color: Colors.black));
 
-      // ✅ CLEAN BODY: No squeezed overlapping input layouts at the base
-      body: PageView.builder(
-        controller: _pageController,
-        itemCount: _categories.length,
-        onPageChanged: (int index) {
-          setState(() { _selectedCategory = _categories[index]; });
-        },
-        itemBuilder: (context, pageIndex) {
-          String currentPageCategory = _categories[pageIndex];
+          var tasks = snapshot.data!.docs;
 
-          return StreamBuilder<QuerySnapshot>(
-            stream: _getFilteredTodosStream(currentPageCategory),
-            builder: (context, snapshot) {
-              if (snapshot.hasError) return Center(child: Text("Error: ${snapshot.error}"));
-              if (!snapshot.hasData) return const Center(child: CircularProgressIndicator(color: Colors.black));
+          if (tasks.isEmpty) {
+            return const Center(child: Text("No tasks created yet!", style: TextStyle(color: Colors.grey)));
+          }
 
-              var tasks = snapshot.data!.docs;
-              if (tasks.isEmpty) {
-                return Center(child: Text("No items in $currentPageCategory yet!", style: const TextStyle(color: Colors.grey)));
+          DateTime systemNow = DateTime.now();
+
+          return ListView.builder(
+            itemCount: tasks.length,
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 80),
+            itemBuilder: (context, index) {
+              var taskDoc = tasks[index];
+              var taskData = taskDoc.data() as Map<String, dynamic>;
+              String docId = taskDoc.id;
+              bool isCompleted = taskData['isCompleted'] ?? false;
+              String priority = taskData['priority'] ?? 'none';
+
+              String dueText = "";
+              bool isOverdue = false;
+
+              if (taskData['dueDate'] != null) {
+                DateTime dueDateTime = (taskData['dueDate'] as Timestamp).toDate();
+                dueText = "Due: ${DateFormat('dd/MM/yyyy hh:mm a').format(dueDateTime)}";
+
+                if (dueDateTime.isBefore(systemNow) && !isCompleted) {
+                  isOverdue = true;
+                }
               }
 
-              return ListView.builder(
-                itemCount: tasks.length,
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 80), // Extra bottom padding so items don't hide behind buttons
-                itemBuilder: (context, index) {
-                  var taskDoc = tasks[index];
-                  var taskData = taskDoc.data() as Map<String, dynamic>;
-                  String docId = taskDoc.id;
-                  bool isCompleted = taskData['isCompleted'] ?? false;
+              Color priorityColor = Colors.grey;
+              if (priority == 'high') priorityColor = Colors.red;
+              if (priority == 'medium') priorityColor = Colors.orange;
+              if (priority == 'low') priorityColor = Colors.blue;
 
-                  String dueText = "";
-                  if (taskData['dueDate'] != null) {
-                    DateTime dueDateTime = (taskData['dueDate'] as Timestamp).toDate();
-                    dueText = "Due: ${dueDateTime.day}/${dueDateTime.month}/${dueDateTime.year}";
-                  }
-
-                  return Card(
-                    color: Colors.white,
-                    elevation: 0,
-                    margin: const EdgeInsets.only(bottom: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    child: ListTile(
+              return Card(
+                color: Colors.white,
+                elevation: 0,
+                margin: const EdgeInsets.only(bottom: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (isOverdue)
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
+                        decoration: const BoxDecoration(
+                          color: Colors.amber,
+                          borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
+                        ),
+                        child: const Text(
+                          "⚠️ Due Date Completed - Not Done",
+                          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 11),
+                        ),
+                      ),
+                    ListTile(
                       leading: Checkbox(
                         activeColor: Colors.black,
                         value: isCompleted,
                         onChanged: (val) => _toggleTask(docId, isCompleted),
                       ),
-                      title: Text(
-                        taskData['title'] ?? '',
-                        style: TextStyle(
-                          decoration: isCompleted ? TextDecoration.lineThrough : TextDecoration.none,
-                          color: isCompleted ? Colors.grey : Colors.black87,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      title: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              taskData['title'] ?? '',
+                              style: TextStyle(
+                                decoration: isCompleted ? TextDecoration.lineThrough : TextDecoration.none,
+                                color: isCompleted ? Colors.grey : Colors.black87,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          if (priority != 'none')
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: priorityColor.withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Text(
+                                priority.toUpperCase(),
+                                style: TextStyle(fontSize: 10, color: priorityColor, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                        ],
                       ),
                       subtitle: dueText.isNotEmpty
-                          ? Text(dueText, style: const TextStyle(fontSize: 12, color: Colors.redAccent, fontWeight: FontWeight.bold))
+                          ? Text(dueText, style: TextStyle(fontSize: 12, color: isOverdue ? Colors.red : Colors.grey[600]))
                           : null,
                       trailing: IconButton(
                         icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
                         onPressed: () => _deleteTask(docId),
                       ),
                     ),
-                  );
-                },
+                  ],
+                ),
               );
             },
           );

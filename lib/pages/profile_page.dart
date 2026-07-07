@@ -28,7 +28,6 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  // Opens an alert dialog to edit and update the unique username directly in Firestore
   void _editUsername(BuildContext context, String currentUsername) {
     final controller = TextEditingController(text: currentUsername);
     showDialog(
@@ -348,12 +347,60 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  // Helper inside actions card box
+  Widget _buildActionRow({
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBgColor,
+    required String title,
+    required Color textColor,
+    required VoidCallback onTap,
+    bool showDivider = true,
+  }) {
+    return Column(
+      children: [
+        InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: iconBgColor,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(icon, color: iconColor, size: 20),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: textColor),
+                  ),
+                ),
+                Icon(Icons.chevron_right_rounded, color: Colors.grey[400], size: 20),
+              ],
+            ),
+          ),
+        ),
+        if (showDivider)
+          Padding(
+            padding: const EdgeInsets.only(left: 60.0),
+            child: Divider(height: 1, color: Colors.grey[200]),
+          ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       body: SafeArea(
         child: CustomScrollView(
+          physics: const BouncingScrollPhysics(),
           slivers: [
             // 1. TOP APP BAR
             SliverAppBar(
@@ -366,15 +413,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
               ),
               centerTitle: true,
-              actions: [
-                IconButton(
-                  onPressed: signUserOut,
-                  icon: const Icon(Icons.logout, color: Colors.black87),
-                ),
-              ],
             ),
 
-            // 2. CENTERED PROFILE CARD WITH REALTIME USERNAME EDIT SUPPORT
+            // 2. PROFILE CONTAINER CARD
             SliverToBoxAdapter(
               child: Container(
                 color: Colors.white,
@@ -405,12 +446,10 @@ class _ProfilePageState extends State<ProfilePage> {
                           child: const Icon(Icons.person, size: 50, color: Colors.black),
                         ),
                         const SizedBox(height: 16),
-
-                        // Inline Row featuring the active editable text structure
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const SizedBox(width: 32), // Layout balance offset
+                            const SizedBox(width: 32),
                             Text(
                               "u/$displayUsername",
                               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
@@ -433,7 +472,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
 
-            // 3. SECTION STICKY HEADER
+            // 3. CONTRIBUTIONS HEADER
             SliverPersistentHeader(
               pinned: true,
               delegate: _SliverHeaderDelegate(
@@ -473,7 +512,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   return SliverToBoxAdapter(
                     child: Center(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 60.0),
+                        padding: const EdgeInsets.symmetric(vertical: 40.0),
                         child: Column(
                           children: [
                             Icon(Icons.article_outlined, size: 48, color: Colors.grey[400]),
@@ -573,21 +612,88 @@ class _ProfilePageState extends State<ProfilePage> {
               },
             ),
 
-            // 5. BOTTOM ATTRIBUTION WITH DYNAMIC URL INJECTIONS
+            // 5. ✅ NEW ACTIONS SECTION BLOCK (Matches Drawing Frame)
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 40.0),
+                padding: const EdgeInsets.fromLTRB(16.0, 24.0, 16.0, 8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(left: 4.0, bottom: 10.0),
+                      child: Text(
+                        "Actions",
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF006699)),
+                      ),
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF4F7FC), // Soft container hue blueprint matching sketch panel
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
+                      ),
+                      child: Column(
+                        children: [
+                          _buildActionRow(
+                            icon: Icons.star_rounded,
+                            iconColor: Colors.amber,
+                            iconBgColor: Colors.amber.withOpacity(0.15),
+                            title: "Star us on Github",
+                            textColor: Colors.black87,
+                            onTap: () => _launchURL("https://github.com/Karthik-Beesabathini/ThreadX"),
+                          ),
+                          _buildActionRow(
+                            icon: Icons.logout_rounded,
+                            iconColor: Colors.redAccent,
+                            iconBgColor: Colors.redAccent.withOpacity(0.15),
+                            title: "Logout",
+                            textColor: Colors.redAccent,
+                            onTap: signUserOut,
+                          ),
+                          _buildActionRow(
+                            icon: Icons.article_outlined,
+                            iconColor: Colors.teal,
+                            iconBgColor: Colors.teal.withOpacity(0.15),
+                            title: "Changelog",
+                            textColor: Colors.black87,
+                            onTap: () {
+                              // Optional: Route or show URL here
+                            },
+                          ),
+                          _buildActionRow(
+                            icon: Icons.info_outline_rounded,
+                            iconColor: Colors.blueAccent,
+                            iconBgColor: Colors.blueAccent.withOpacity(0.15),
+                            title: "PrivacyPolicy",
+                            textColor: Colors.black87,
+                            showDivider: false,
+                            onTap: () {
+                              // Optional: Route or show privacy policy here
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // 6. BOTTOM ATTRIBUTION FOOTER
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 32.0, bottom: 40.0),
                 child: Column(
                   children: [
-                    Row(
+                    const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text("Crafted with ", style: TextStyle(color: Colors.black, fontSize: 18)),
-                        const Text("❤️ ", style: TextStyle(fontSize: 12)),
-                        const Text("by", style: TextStyle(color: Colors.black, fontSize: 18)),
+                        Text("Crafted with ", style: TextStyle(color: Colors.black54, fontSize: 14)),
+                        Text("❤️ ", style: TextStyle(fontSize: 12)),
+                        Text("by", style: TextStyle(color: Colors.black54, fontSize: 14)),
                       ],
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
@@ -619,9 +725,9 @@ class _ProfilePageState extends State<ProfilePage> {
                         }),
                       ],
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 16),
                     Text(
-                      "v2.3.3",
+                      "",
                       style: TextStyle(color: Colors.grey[400], fontSize: 12, fontWeight: FontWeight.bold),
                     )
                   ],
