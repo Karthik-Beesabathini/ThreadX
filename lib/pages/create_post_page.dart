@@ -117,7 +117,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
 
             // Fixed property name back to value for DropdownButtonFormField
             DropdownButtonFormField<String>(
-              value: _selectedCategory,
+              initialValue: _selectedCategory,
               decoration: InputDecoration(
                 labelText: "Select Category / Branch",
                 border: OutlineInputBorder(

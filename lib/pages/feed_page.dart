@@ -111,7 +111,7 @@ class _FeedPageState extends State<FeedPage> {
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: filtered.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 6),
+                      separatorBuilder: (_, _) => const SizedBox(height: 6),
                       itemBuilder: (context, idx) {
                         String cat = filtered[idx];
                         bool isSelected = _selectedCategory == cat;

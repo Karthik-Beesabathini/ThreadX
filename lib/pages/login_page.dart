@@ -208,7 +208,7 @@ class _LoginPageState extends State<LoginPage> {
                       border: Border.all(color: Colors.grey[200]!, width: 1.5),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.02),
+                          color: Colors.black.withValues(alpha: 0.02),
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         ),

@@ -502,7 +502,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 }
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const SliverToBoxAdapter(
-                    child: Center(child: Padding(padding: const EdgeInsets.all(20), child: CircularProgressIndicator(color: Colors.black))),
+                    child: Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: Colors.black))),
                   );
                 }
 
@@ -637,7 +637,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           _buildActionRow(
                             icon: Icons.star_rounded,
                             iconColor: Colors.amber,
-                            iconBgColor: Colors.amber.withOpacity(0.15),
+                            iconBgColor: Colors.amber.withValues(alpha: 0.15),
                             title: "Star us on Github",
                             textColor: Colors.black87,
                             onTap: () => _launchURL("https://github.com/Karthik-Beesabathini/ThreadX"),
@@ -645,7 +645,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           _buildActionRow(
                             icon: Icons.logout_rounded,
                             iconColor: Colors.redAccent,
-                            iconBgColor: Colors.redAccent.withOpacity(0.15),
+                            iconBgColor: Colors.redAccent.withValues(alpha: 0.15),
                             title: "Logout",
                             textColor: Colors.redAccent,
                             onTap: signUserOut,
@@ -653,7 +653,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           _buildActionRow(
                             icon: Icons.article_outlined,
                             iconColor: Colors.teal,
-                            iconBgColor: Colors.teal.withOpacity(0.15),
+                            iconBgColor: Colors.teal.withValues(alpha: 0.15),
                             title: "Changelog",
                             textColor: Colors.black87,
                             onTap: () {
@@ -663,7 +663,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           _buildActionRow(
                             icon: Icons.info_outline_rounded,
                             iconColor: Colors.blueAccent,
-                            iconBgColor: Colors.blueAccent.withOpacity(0.15),
+                            iconBgColor: Colors.blueAccent.withValues(alpha: 0.15),
                             title: "PrivacyPolicy",
                             textColor: Colors.black87,
                             showDivider: false,

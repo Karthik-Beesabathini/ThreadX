@@ -106,8 +106,8 @@ class _HomePageState extends State<HomePage> {
       child: InkWell(
         onTap: () => setState(() => _currentIndex = index),
         borderRadius: BorderRadius.circular(12),
-        splashColor: Colors.black.withOpacity(0.06),
-        highlightColor: Colors.black.withOpacity(0.03),
+        splashColor: Colors.black.withValues(alpha: 0.06),
+        highlightColor: Colors.black.withValues(alpha: 0.03),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
