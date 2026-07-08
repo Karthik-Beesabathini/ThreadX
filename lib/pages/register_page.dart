@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../components/my_button.dart';
 import '../components/my_text_field.dart';
+import '../helpers/ui_helpers.dart';
 
 class RegisterPage extends StatefulWidget {
   final VoidCallback showLoginPage;
@@ -18,6 +19,7 @@ class _RegisterPageState extends State<RegisterPage> {
   final _confirmPasswordController = TextEditingController();
 
   @override
+  //dispose after using controller to control memory leaks
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
@@ -29,28 +31,10 @@ class _RegisterPageState extends State<RegisterPage> {
     return _passwordController.text.trim() == _confirmPasswordController.text.trim();
   }
 
-  void showErrorMessage(String message) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text("Error", style: TextStyle(fontWeight: FontWeight.bold)),
-          content: Text(message),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("OK", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   Future signUp() async {
     if (!passwordConfirmed()) {
-      showErrorMessage("Passwords don't match");
+      ErrorDialogs.showErrorMessage(context,"Passwords don't match");
       return;
     }
 
@@ -77,12 +61,12 @@ class _RegisterPageState extends State<RegisterPage> {
       if (mounted && Navigator.canPop(context)) {
         Navigator.of(context, rootNavigator: true).pop();
       }
-      showErrorMessage(e.message ?? "Something went wrong. Try again.");
+      ErrorDialogs.showErrorMessage(context,e.message ?? "Something went wrong. Try again.");
     } catch (e) {
       if (mounted && Navigator.canPop(context)) {
         Navigator.of(context, rootNavigator: true).pop();
       }
-      showErrorMessage("Network error. Check your connection and try again.");
+      ErrorDialogs.showErrorMessage(context,"Network error. Check your connection and try again.");
     }
   }
 
@@ -141,7 +125,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 MyTextField(
                   controller: _passwordController,
                   hintText: "Password",
-                  obscureText: true, // ✅ SECURED: Input characters hidden
+                  obscureText: true,
                 ),
 
                 const SizedBox(height: 12),
@@ -149,17 +133,17 @@ class _RegisterPageState extends State<RegisterPage> {
                 MyTextField(
                   controller: _confirmPasswordController,
                   hintText: "Confirm password",
-                  obscureText: true, // ✅ SECURED: Input characters hidden
+                  obscureText: true,
                 ),
 
                 const SizedBox(height: 28),
 
-                // 4. ACTION SUBMIT BUTTON
+                //signUp button
                 MyButton(text: "Sign Up", onTap: signUp),
 
                 const SizedBox(height: 32),
 
-                // 5. REDIRECT FOOTER
+                // redirect to  login page
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

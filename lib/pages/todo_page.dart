@@ -87,7 +87,8 @@ class TodoPageState extends State<TodoPage> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Priority", style: TextStyle(fontSize: 13, color: Colors.grey)),
+                  const Text("Priority",
+                      style: TextStyle(fontSize: 13, color: Colors.grey)),
                   const SizedBox(height: 6),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -209,7 +210,7 @@ class TodoPageState extends State<TodoPage> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
+                child: const Text("Cancel", style: TextStyle(color: Colors.black)),
               ),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
@@ -257,7 +258,8 @@ class TodoPageState extends State<TodoPage> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text("MY TASKS", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black)),
+        title: const Text("MY TASKS",
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Colors.black)),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,

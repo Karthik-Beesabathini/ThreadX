@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../helpers/ui_helpers.dart';
 import 'forgot_password_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -18,24 +19,7 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  void showErrorMessage(String message) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text("Error", style: TextStyle(fontWeight: FontWeight.bold)),
-          content: Text(message),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("OK", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        );
-      },
-    );
-  }
+
 
   Future signIn() async {
     showDialog(
@@ -61,12 +45,12 @@ class _LoginPageState extends State<LoginPage> {
       if (mounted && Navigator.canPop(context)) {
         Navigator.of(context, rootNavigator: true).pop();
       }
-      showErrorMessage(e.message ?? "Something went wrong. Try again.");
+      ErrorDialogs.showErrorMessage(context, e.message ?? "Something went wrong. Try again.");
     } catch (e) {
       if (mounted && Navigator.canPop(context)) {
         Navigator.of(context, rootNavigator: true).pop();
       }
-      showErrorMessage("Network error. Check your connection and try again.");
+      ErrorDialogs.showErrorMessage(context,"Network error. Check your connection and try again.");
     }
   }
 
@@ -83,7 +67,7 @@ class _LoginPageState extends State<LoginPage> {
 
       await FirebaseAuth.instance.signInWithCredential(credential);
     } catch (e) {
-      showErrorMessage("Google Sign-In failed. Please try again.");
+      ErrorDialogs.showErrorMessage(context,"Google Sign-In failed. Please try again.");
     }
   }
 
@@ -149,7 +133,7 @@ class _LoginPageState extends State<LoginPage> {
                 MyTextField(
                   controller: _passwordController,
                   hintText: "Password",
-                  obscureText: true, // ✅ SECURED: Hidden characters for passwords
+                  obscureText: true,
                 ),
 
                 const SizedBox(height: 14),
@@ -180,7 +164,7 @@ class _LoginPageState extends State<LoginPage> {
 
                 const SizedBox(height: 32),
 
-                // Sleek Visual Divider Framework
+
                 Row(
                   children: [
                     Expanded(child: Divider(color: Colors.grey[300], thickness: 1)),

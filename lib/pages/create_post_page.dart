@@ -10,13 +10,11 @@ class CreatePostPage extends StatefulWidget {
 }
 
 class _CreatePostPageState extends State<CreatePostPage> {
-  final currentUser = FirebaseAuth.instance.currentUser!;
+  final currentUser = FirebaseAuth.instance.currentUser;
 
-  // Text fields controllers
   final _titleController = TextEditingController();
   final _postController = TextEditingController();
 
-  // Categories available for selection
   final List<String> _categories = [
     'General',
     'college',
@@ -48,7 +46,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
         'title': _titleController.text.trim(),
         'text': _postController.text.trim(),
         'category': _selectedCategory,
-        'authorId': currentUser.uid,
+        'authorId': currentUser?.uid ?? 'anonymous_user',
         'timestamp': FieldValue.serverTimestamp(),
       });
 
@@ -87,7 +85,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      // Handles dynamic keyboard padding securely
       padding: EdgeInsets.only(
         top: 20,
         left: 20,
@@ -115,28 +112,47 @@ class _CreatePostPageState extends State<CreatePostPage> {
             ),
             const SizedBox(height: 15),
 
-            // Fixed property name back to value for DropdownButtonFormField
-            DropdownButtonFormField<String>(
-              initialValue: _selectedCategory,
-              decoration: InputDecoration(
-                labelText: "Select Category / Branch",
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+            // Corrected DropdownMenu implementation
+            Theme(
+              data: Theme.of(context).copyWith(
+                scrollbarTheme: ScrollbarThemeData(
+                  thumbVisibility: WidgetStateProperty.all(true),
+                  thickness: WidgetStateProperty.all(6.0),
+                  thumbColor: WidgetStateProperty.all(Colors.black.withOpacity(0.5)),
+                  radius: const Radius.circular(4),
                 ),
-                filled: true,
-                fillColor: Colors.grey[100],
               ),
-              items: _categories.map((String category) {
-                return DropdownMenuItem<String>(
-                  value: category,
-                  child: Text(category),
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                setState(() {
-                  _selectedCategory = newValue!;
-                });
-              },
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  return DropdownMenu<String>(
+                    initialSelection: _selectedCategory,
+                    menuHeight: 220,
+                    width: constraints.maxWidth,
+                    label: const Text("Select Category / Branch"),
+                    inputDecorationTheme: InputDecorationTheme(
+                      labelStyle: const TextStyle(color: Colors.black54),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[100],
+                    ),
+                    dropdownMenuEntries: _categories.map((String category) {
+                      return DropdownMenuEntry<String>(
+                        value: category,
+                        label: category,
+                      );
+                    }).toList(),
+                    onSelected: (String? newValue) {
+                      if (newValue != null) {
+                        setState(() {
+                          _selectedCategory = newValue;
+                        });
+                      }
+                    },
+                  );
+                },
+              ),
             ),
             const SizedBox(height: 12),
 
@@ -146,7 +162,6 @@ class _CreatePostPageState extends State<CreatePostPage> {
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
               decoration: InputDecoration(
                 hintText: "Enter a catchy title...",
-                hintStyle: const TextStyle(fontWeight: FontWeight.normal),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -177,7 +192,7 @@ class _CreatePostPageState extends State<CreatePostPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.black,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),

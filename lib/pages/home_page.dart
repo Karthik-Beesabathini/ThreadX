@@ -1,4 +1,5 @@
 import 'package:calc_app/pages/game_page.dart';
+import 'package:calc_app/pages/todo_expenses.page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:calc_app/pages/feed_page.dart';
 import 'package:calc_app/pages/todo_page.dart';
 import 'package:calc_app/pages/profile_page.dart';
 import 'package:calc_app/pages/create_post_page.dart';
+import 'package:calc_app/pages/expenses_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -18,16 +20,26 @@ class _HomePageState extends State<HomePage> {
   final currentUser = FirebaseAuth.instance.currentUser;
   int _currentIndex = 0;
 
-  // Lets the shared FAB reach into TodoPage's state to open its dialog,
-  // since TodoPage no longer owns its own FloatingActionButton.
+  //generally i need fab button to execute different things in different pages soo
   final GlobalKey<TodoPageState> _todoPageKey = GlobalKey<TodoPageState>();
 
+  // Dynamic keys to access the nested swipable tabs framework
+  final GlobalKey<ExpensesPageState> _expensesPageKey = GlobalKey<ExpensesPageState>();
+  final GlobalKey<TodoExpensesPageState> _swipeTabsKey = GlobalKey<TodoExpensesPageState>();
+
+  // Explicit ScrollController tracking to force layout view snaps upon navigation tap
+  final ScrollController _profileScrollController = ScrollController();
+
   late final List<Widget> _pages = [
-    const FeedPage(),                    // Index 0: Thread
-    TodoPage(key: _todoPageKey),         // Index 1: Todo List
-    const SizedBox(),                    // Index 2: Spacer matching center FAB positioning
-    const GamePage(),                    // Index 3: Games
-    const ProfilePage(),                 // Index 4: Profile
+    const FeedPage(),
+    TodoExpensesPage(
+      key: _swipeTabsKey,
+      todoKey: _todoPageKey,
+      expensesKey: _expensesPageKey,
+    ), // Replaced standalone TodoPage with the dynamic swipe manager
+    const SizedBox(),
+    const GamePage(),
+    ProfilePage(scrollController: _profileScrollController), // Pass the controller here
   ];
 
   @override
@@ -104,7 +116,15 @@ class _HomePageState extends State<HomePage> {
 
     return Expanded(
       child: InkWell(
-        onTap: () => setState(() => _currentIndex = index),
+        onTap: () {
+          // If switching to the Profile tab, instantly snap its scroll position back to the top
+          if (index == 4) {
+            if (_profileScrollController.hasClients) {
+              _profileScrollController.jumpTo(0);
+            }
+          }
+          setState(() => _currentIndex = index);
+        },
         borderRadius: BorderRadius.circular(12),
         splashColor: Colors.black.withValues(alpha: 0.06),
         highlightColor: Colors.black.withValues(alpha: 0.03),
@@ -132,11 +152,12 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  // Single shared FAB for the whole app — swaps its action based on the
-  // active tab instead of each page owning (and duplicating) its own.
+
+// only one fab excutes different things in different pages
   Widget? _buildContextualFab() {
     switch (_currentIndex) {
-      case 0: // Thread feed — create a post
+    //in thread page naa it is used to create post
+      case 0:
         return FloatingActionButton(
           onPressed: () {
             _authGuard(() {
@@ -155,12 +176,18 @@ class _HomePageState extends State<HomePage> {
           shape: const CircleBorder(),
           child: const Icon(Icons.add, color: Colors.white, size: 28),
         );
-
-      case 1: // Todo List — add a task
+    //in Todo page to add task
+      case 1:
         return FloatingActionButton(
           onPressed: () {
             _authGuard(() {
-              _todoPageKey.currentState?.showAddTaskDialog();
+              // Read which sub-tab user is on before sending the GlobalKey trigger
+              final subIndex = _swipeTabsKey.currentState?.activeSubTabIndex ?? 0;
+              if (subIndex == 0) {
+                _todoPageKey.currentState?.showAddTaskDialog();
+              } else {
+                _expensesPageKey.currentState?.showAddExpenseDialog();
+              }
             });
           },
           backgroundColor: Colors.black,
@@ -168,7 +195,8 @@ class _HomePageState extends State<HomePage> {
           child: const Icon(Icons.add, color: Colors.white, size: 28),
         );
 
-      default: // Games, Profile — no shared FAB needed here
+    // in others pages we don't need fab button
+      default:
         return null;
     }
   }
@@ -178,7 +206,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       backgroundColor: Colors.white,
 
-      // ✅ FIX FOR BUG 2: Prevents keyboard view resizing on inner GamePage structures
+      // bug fixed here to not resize keyboard
       resizeToAvoidBottomInset: false,
 
       body: IndexedStack(
@@ -197,6 +225,7 @@ class _HomePageState extends State<HomePage> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
+              //method to create bottom nav bar properly
               _buildNavItem(
                 index: 0,
                 icon: _currentIndex == 0 ? Icons.view_stream_rounded : Icons.view_stream_outlined,

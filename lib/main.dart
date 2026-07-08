@@ -1,19 +1,21 @@
 import 'package:calc_app/auth/main_page.dart';
+//flutter code connection to google firebase services
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 
+//async tells flutter don't show ui we have to set heavy background
 void main() async {
-  // 1. Hold the native splash screen while initializing engines
-  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
-  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
+  //connect flutter engine to android or ios completely
+  WidgetsBinding a = WidgetsFlutterBinding.ensureInitialized();
+  //given reference a to the splashScreen to show photos/animations
+  FlutterNativeSplash.preserve(widgetsBinding: a);
 
-  // 2. Initialize Firebase backend services
+  // 2. Initialize Firebase
   await Firebase.initializeApp();
 
-  // 3. Remove the splash screen gracefully to display the first UI frame
+  // 3. remove the splashScreen after getting backend services
   FlutterNativeSplash.remove();
-
   runApp(const MyApp());
 }
 
